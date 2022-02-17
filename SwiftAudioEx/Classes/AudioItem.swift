@@ -22,7 +22,8 @@ public protocol AudioItem {
     func getAlbumTitle() -> String?
     func getSourceType() -> SourceType
     func getArtwork(_ handler: @escaping (UIImage?) -> Void)
-    
+    func getURLAsset() -> AVURLAsset?
+    func getUrl() -> URL?
 }
 
 /// Make your `AudioItem`-subclass conform to this protocol to control which AVAudioTimePitchAlgorithm is used for each item.
@@ -44,6 +45,8 @@ public protocol AssetOptionsProviding {
 
 public class DefaultAudioItem: AudioItem {
     
+    public var asset: AVURLAsset?
+    
     public var audioUrl: String
     
     public var artist: String?
@@ -56,13 +59,18 @@ public class DefaultAudioItem: AudioItem {
     
     public var artwork: UIImage?
     
-    public init(audioUrl: String, artist: String? = nil, title: String? = nil, albumTitle: String? = nil, sourceType: SourceType, artwork: UIImage? = nil) {
+    public init(audioUrl: String, artist: String? = nil, title: String? = nil, albumTitle: String? = nil, sourceType: SourceType, artwork: UIImage? = nil, urlAsset: AVURLAsset? = nil) {
         self.audioUrl = audioUrl
         self.artist = artist
         self.title = title
         self.albumTitle = albumTitle
         self.sourceType = sourceType
         self.artwork = artwork
+        self.asset = urlAsset
+    }
+    
+    public func getURLAsset() -> AVURLAsset? {
+        return asset
     }
     
     public func getSourceUrl() -> String {
@@ -89,6 +97,15 @@ public class DefaultAudioItem: AudioItem {
         handler(artwork)
     }
     
+    public func getUrl() -> URL? {
+        switch self.getSourceType() {
+        case .stream:
+            return URL(string: self.getSourceUrl())
+        case .file:
+            return URL(fileURLWithPath: self.getSourceUrl())
+        }
+     
+    }
 }
 
 /// An AudioItem that also conforms to the `TimePitching`-protocol
@@ -96,14 +113,14 @@ public class DefaultAudioItemTimePitching: DefaultAudioItem, TimePitching {
     
     public var pitchAlgorithmType: AVAudioTimePitchAlgorithm
     
-    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?) {
+    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, urlAsset: AVURLAsset?) {
         self.pitchAlgorithmType = AVAudioTimePitchAlgorithm.lowQualityZeroLatency
         super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
     }
     
-    public init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, audioTimePitchAlgorithm: AVAudioTimePitchAlgorithm) {
+    public init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, audioTimePitchAlgorithm: AVAudioTimePitchAlgorithm, urlAsset: AVURLAsset? = nil) {
         self.pitchAlgorithmType = audioTimePitchAlgorithm
-        super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
+        super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork, urlAsset: urlAsset)
     }
     
     public func getPitchAlgorithmType() -> AVAudioTimePitchAlgorithm {
@@ -116,9 +133,9 @@ public class DefaultAudioItemInitialTime: DefaultAudioItem, InitialTiming {
     
     public var initialTime: TimeInterval
     
-    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?) {
+    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, urlAsset: AVURLAsset?) {
         self.initialTime = 0.0
-        super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
+        super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork, urlAsset: urlAsset)
     }
     
     public init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, initialTime: TimeInterval) {
@@ -137,9 +154,9 @@ public class DefaultAudioItemAssetOptionsProviding: DefaultAudioItem, AssetOptio
     
     public var options: [String: Any]
     
-    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?) {
+    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, urlAsset: AVURLAsset? = nil) {
         self.options = [:]
-        super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
+        super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork, urlAsset: urlAsset)
     }
     
     public init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, options: [String: Any]) {

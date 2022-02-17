@@ -55,6 +55,15 @@ class ViewController: UIViewController {
         }
     }
     
+    @IBAction func download(_ sender: Any) {
+        print("download")
+        let url = "http://ec2-13-53-83-250.eu-north-1.compute.amazonaws.com/vods3/_definst_/mp3:amazons3/audio-books-staging-private/76/8d/768d79dcea8ae1e9fa0fa1e7e9b48df7_1.mp3/playlist.m3u8?wowzatokenendtime=1645027700&wowzatokenstarttime=1645024100&wowzatokenhash=itr5wF_k_cGrKSO9SOoLHalI4Z6rRqnnbST9x4Imykofl8NhUeCAv8alCd-az6YU";
+        let urlAsset = AVURLAsset(url: URL(string: url)!)
+        let stream = Stream(nm: "hello", playlist: url)
+        let asset = Asset(stream: stream, urlAsset:urlAsset)
+        AssetPersistenceManager.sharedManager.downloadStream(for: asset)
+    }
+    
     @IBAction func previous(_ sender: Any) {
         try? controller.player.previous()
     }
